@@ -1,14 +1,16 @@
-package com.projecta.ex;
+package com.projecta.producerex;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class ProducerEx {
+public class ProducerWithCallbackEx {
 
     private static final Logger log = LoggerFactory.getLogger(ProducerEx.class.getSimpleName());
     public static void main(String[] args) {
@@ -26,12 +28,23 @@ public class ProducerEx {
         //// In the producer we are defining data types of the key and value, also passing in properties for the producer to know how to connect.
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
-        // create a producer record
-        ProducerRecord<String, String> producerRecord = new ProducerRecord<>("topicEx", "Hello world");
+        for(int i = 0; i <=100; i++){
+            // create a producer record
+            ProducerRecord<String, String> producerRecord = new ProducerRecord<>("topicEx", "Hello world");
 
-        // send data
-        //// Sending data is async process
-        producer.send(producerRecord);
+            // send data
+            //// Sending data is async process
+            producer.send(producerRecord, new Callback() {
+                @Override
+                public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+                    if(e == null){
+                        log.info("Partition:" + recordMetadata.partition() + ", Offset:" + recordMetadata.offset());
+                    } else {
+                        log.error("Error occurred", e);
+                    }
+                }
+            });
+        }
 
         //// flush is sync process, tells the producer to send all the data, block until done
         producer.flush();
