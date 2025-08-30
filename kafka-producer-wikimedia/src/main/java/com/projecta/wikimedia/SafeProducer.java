@@ -11,7 +11,7 @@ import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-public class WikimediaChangesProducer {
+public class SafeProducer {
     public static void main(String[] args) throws InterruptedException {
         Properties properties = new Properties();
 
@@ -19,6 +19,10 @@ public class WikimediaChangesProducer {
         properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
+        // Till 2.8 default is 1 which means only leader ack is received, post 2.8 default is -1 or all
+        properties.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+        properties.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        properties.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString((Integer.MAX_VALUE)));
 
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
         String topic = "wikimedia.recentchange";
